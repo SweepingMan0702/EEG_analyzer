@@ -1,0 +1,17 @@
+長條圖✔
+
+擷取有效分鐘數
+
+K-means 分出 疲勞、基準、恢復三種狀態 值心1倍std
+
+working 中疲勞 base line 以及各點斜率
+
+心律分析
+
+擷取typing test的分數
+
+偵測base line 是否已為疲勞
+
+
+modle : 如何偵測工作中的疲勞 、 緩解有效 (Kmeans、tree、DBSCAN)
+分兩群建模型 ， 偵測的時候實時分析
