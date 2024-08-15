@@ -135,8 +135,8 @@ for i = 1:length(stft_results)
 end
 
 % 分布圖
-base_samples = 3 * 60; %共180秒
-fatigue_samples = 5 * 60;
+base_samples = 3 * 60; %前三分鐘
+fatigue_samples = 5 * 60; %最後五分鐘
 t_index_base = stft_results{1}{2} <= base_samples; %對應到第360個點，形成一個mask
 t_index_fatigue = stft_results{1}{2} >= (max(stft_results{1}{2}) - fatigue_samples);
 ps_base = stft_results{1}{3}(:, t_index_base);
@@ -146,23 +146,21 @@ ps_recovered = stft_results{2}{3};
 freq_bands = {[8 12], [12 35], [4 7]};
 band_names = {'Alpha (8-12 Hz)', 'Beta (12-35 Hz)', 'Theta (4-7 Hz)'};
 
-% range = {[0 35] [0 40] [0 210]};
-
 %stft_results{1}是頻率的list
 for i = 1:length(freq_bands)
     max = 0;
     % 计算每个频段的能量数据
     freq_index = (stft_results{1}{1} >= freq_bands{i}(1)) & (stft_results{1}{1} <= freq_bands{i}(2));
     
-    % 第一阶段：前三分钟
+    % 第一階段：前三分鐘
     ps_band_base = ps_base(freq_index, :);
     energy_base = sum(ps_band_base, 1);
     
-    % 第二阶段：最后七分钟
+    % 第二階段：最後五分鐘
     ps_band_fatigue = ps_fatigue(freq_index, :);
     energy_fatigue = sum(ps_band_fatigue, 1);
 
-    % 第三阶段：recovered整段
+    % 第三階段：recovered
     ps_band_recovered = ps_recovered(freq_index, :);
     energy_recovered = sum(ps_band_recovered, 1);
 
@@ -251,9 +249,9 @@ close all;
 end
 disp('已將各圖檔儲存至資料夾內');
 
-
-
 %箱型圖範圍函式
+
+
 function [minNonOutlier, maxNonOutlier , nonOutlierData] = calculateNonOutlierRange(data)
     % 计算箱线图统计数据
     Q1 = quantile(data, 0.25); % 第 25 百分位数 (Q1)
