@@ -1,17 +1,91 @@
-長條圖✔
+x = data(2,:);
+fs = 250;
+win = hamming(250);
+noverlap = 125;
+nfft = 256;
 
-擷取有效分鐘數
+% 設置要擷取的時間範圍
+start_time = 23 * 60;  % 開始時間（秒）
+end_time = 29 * 60;    % 結束時間（秒）
 
-K-means 分出 疲勞、基準、恢復三種狀態 值心1倍std
-
-working 中疲勞 base line 以及各點斜率
-
-心律分析
-
-擷取typing test的分數
-
-偵測base line 是否已為疲勞
+% 擷取指定時間段的數據
+start_sample = round(start_time * fs) + 1;
+end_sample = round(end_time * fs);
+working_x = x(start_sample:end_sample);
 
 
-modle : 如何偵測工作中的疲勞 、 緩解有效 (Kmeans、tree、DBSCAN)
-分兩群建模型 ， 偵測的時候實時分析
+[~, f, t_stft, ps] = spectrogram(working_x, win, noverlap, nfft, fs, "ps");
+% 定義alpha波範圍
+alpha_range = [8 12];
+alpha_indices = find(f >= alpha_range(1) & f <= alpha_range(2));
+
+% 提取alpha波的功率譜
+alpha_ps = ps(alpha_indices, :);
+
+% 定義Beta波範圍
+beta_range = [12, 35];
+beta_indices = find(f >= beta_range(1) & f <= beta_range(2));
+
+% 提取Beta波的功率譜
+beta_ps = ps(beta_indices, :);
+
+% 定義Theta波範圍
+theta_range = [4, 7];
+theta_indices = find(f >= theta_range(1) & f <= theta_range(2));
+
+% 提取Theta波的功率譜
+theta_ps = ps(theta_indices, :);
+
+A = sum(alpha_ps,1);
+B = sum(beta_ps,1);
+T = sum(theta_ps,1);
+X = [A ;B ;T]';
+
+%離群值刪除
+% 步驟 1: 計算每列的四分位數
+Q1 = quantile(X, 0.25);
+Q3 = quantile(X, 0.75);
+IQR = Q3 - Q1;
+% 步驟 2: 定義離群值的範圍
+lower_bound = Q1 - 1.5 * IQR;
+upper_bound = Q3 + 1.5 * IQR;
+% 步驟 3: 找出非離群值的行
+valid_rows = all(X >= lower_bound & X <= upper_bound, 2);
+% 步驟 4: 只保留非離群值的行
+X_cleaned = X(valid_rows, :);
+% 顯示結果
+% fprintf('原始數據行數: %d\n', size(X, 1));
+% fprintf('清理後數據行數: %d\n', size(X_cleaned, 1));
+% fprintf('移除的行數: %d\n', size(X, 1) - size(X_cleaned, 1));
+
+
+% 假設您的數據存儲在名為 data 的變量中
+% data 是一個 1000 x 3 的矩陣 [alpha_ps beta_ps theta_ps]
+
+% 創建圖形
+figure;
+
+% 使用 scatter3 函數繪製三維散點圖
+scatter3(X_cleaned(:,1), X_cleaned(:,2), X_cleaned(:,3), 20, 'filled');
+
+% 添加標籤和標題
+xlabel('Alpha Power');
+ylabel('Beta Power');
+zlabel('Theta Power');
+title('EEG Power Spectrum Distribution');
+
+% 添加顏色條以表示點的密度
+colorbar;
+colormap(jet); % 使用 jet 顏色圖以更好地區分點的密度
+
+% 調整視角以獲得更好的視圖
+view(45, 30);
+
+% 添加網格線以增強 3D 效果
+grid on;
+
+% 調整軸的範圍使圖形更加緊湊（可選）
+axis tight;
+
+% 添加旋轉控制（可選，使用者可以在圖形窗口中旋轉視圖）
+rotate3d on;

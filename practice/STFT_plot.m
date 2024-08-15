@@ -1,3 +1,16 @@
+[file1, path1] = uigetfile({'*.mat;*.txt;*.csv', 'Supported Files (*.mat, *.txt, *.csv)'; ...
+                            '*.mat', 'MAT-files (*.mat)'; ...
+                            '*.txt', 'Text Files (*.txt)'; ...
+                            '*.csv', 'CSV Files (*.csv)'}, ...
+                            'Select the first file');
+if isequal(file1, 0)
+    disp('User canceled the first file selection.');
+else
+    fullFileName1 = fullfile(path1, file1);
+    file = fullFileName1;
+end
+load(file, 'data');
+
 x = data(2,:);
 fs = 250;
 win = hamming(250);
@@ -5,16 +18,16 @@ noverlap = 125;
 nfft = 256;
 
 % 設置要擷取的時間範圍
-start_time = 3 * 60;  % 開始時間（秒）
+start_time = 4 * 60;  % 開始時間（秒）
 end_time = 23 * 60;    % 結束時間（秒）
 
-% % 擷取指定時間段的數據
-% start_sample = round(start_time * fs) + 1;
-% end_sample = round(end_time * fs);
-% working_x = x(start_sample:end_sample);
+% 擷取指定時間段的數據
+start_sample = round(start_time * fs) + 1;
+end_sample = round(end_time * fs);
+working_x = x(start_sample:end_sample);
 
 
-[~, f, t_stft, ps] = spectrogram(x, win, noverlap, nfft, fs, "ps");
+[~, f, t_stft, ps] = spectrogram(working_x, win, noverlap, nfft, fs, "ps");
 % 定義alpha波範圍
 alpha_range = [8 12];
 alpha_indices = find(f >= alpha_range(1) & f <= alpha_range(2));
@@ -28,6 +41,8 @@ plot(t_stft/60, sum(alpha_ps,1));
 xlabel('Time (min)');
 ylabel('Alpha Power');
 title('Alpha Wave Power Over Time');
+set(gcf, 'Units', 'Inches', 'Position', [0, 0, 16, 9]);
+saveas(gcf, [ path1 '\working_alpha.png']);
 
 % 定義Beta波範圍
 beta_range = [12, 35];
@@ -42,6 +57,8 @@ plot(t_stft/60, sum(beta_ps,1));
 xlabel('Time (min)');
 ylabel('beta Power');
 title('Beta Wave Power Over Time');
+set(gcf, 'Units', 'Inches', 'Position', [0, 0, 16, 9]);
+saveas(gcf, [ path1 '\working_beta.png']);
 
 
 % 定義Theta波範圍
@@ -57,6 +74,8 @@ plot(t_stft/60, sum(theta_ps,1));
 xlabel('Time (min)');
 ylabel('Theta Power');
 title('Theta Wave Power Over Time');
+set(gcf, 'Units', 'Inches', 'Position', [0, 0, 16, 9]);
+saveas(gcf, [ path1 '\working_theta.png']);
 close all;
 
 A = sum(alpha_ps,1);
@@ -64,48 +83,34 @@ B = sum(beta_ps,1);
 T = sum(theta_ps,1);
 X = [A ;B ;T]';
 
-% 假設您的數據已經載入到變量 X 中，大小為 3741x3
-% 如果還沒有，您可以這樣載入：
-% load('your_data_file.mat'); % 替換成您的數據文件名
+% 計算每種波的開頭和結尾一分鐘的平均值
+waves = {A, B, T};
+wave_names = {'Alpha', 'Beta', 'Theta'};
 
-% 檢查數據大小
-[num_samples, num_features] = size(X);
-fprintf('數據大小: %d 樣本, %d 特徵\n', num_samples, num_features);
-
-% 設置聚類數量（可以根據需要調整）
-k = 3;
-
-% 執行 K-means 聚類
-[idx, centroids] = kmeans(X, k);
-
-% 創建 3D 散點圖
-figure;
-scatter3(X(:,1), X(:,2), X(:,3), 15, idx, 'filled');
-hold on;
-
-% 添加聚類中心
-plot3(centroids(:,1), centroids(:,2), centroids(:,3), 'kx', 'MarkerSize', 15, 'LineWidth', 3);
-
-% 添加標籤和標題
-xlabel('特徵 1');
-ylabel('特徵 2');
-zlabel('特徵 3');
-title('3D K-means 聚類結果');
-
-% 添加顏色條以顯示聚類
-colorbar;
-
-% 添加圖例
-legend('數據點', '聚類中心', 'Location', 'bestoutside');
-
-% 調整視角以獲得更好的視圖
-view(45, 30);
-
-% 添加網格線以增強 3D 效果
-grid on;
-
-% 顯示每個聚類的樣本數
-for i = 1:k
-    cluster_size = sum(idx == i);
-    fprintf('聚類 %d: %d 個樣本\n', i, cluster_size);
+for i = 1:length(wave_names)
+    wave = waves{i};
+    
+    % 只保留 t_stft 小於 60 秒的數據
+    time_mask_start = t_stft <= 60;
+    wave_start = wave(time_mask_start);
+    
+    % 只保留 t_stft 大於等於最後 60 秒的數據
+    time_mask_end = t_stft >= (max(t_stft)-60);
+    wave_end = wave(time_mask_end);
+    
+    % 計算開頭一分鐘和結尾一分鐘的平均值
+    start_avg = mean(wave_start);
+    end_avg = mean(wave_end);
+    
+    % 計算斜率
+    x1 = 4; % 開始時間為 4 分鐘
+    x2 = 23; % 結束時間為 23 分鐘
+    slope = (end_avg - start_avg) / (x2 - x1);
+    
+    % 顯示結果
+    disp(['-----' wave_names{i} ' 波-----']);
+    disp(['開頭一分鐘的平均值: ' num2str(start_avg)]);
+    disp(['結尾一分鐘的平均值: ' num2str(end_avg)]);
+    disp([wave_names{i} '_start到' wave_names{i} '_end的斜率: ' num2str(slope)]);
+    disp(' ');
 end

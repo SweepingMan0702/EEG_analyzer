@@ -1,141 +1,170 @@
-files = cell(2);
-% 選擇檔案
-disp('選擇工作階段檔案(.mat)');
-[file1, path1] = uigetfile({'*.mat;*.txt;*.csv', 'Supported Files (*.mat, *.txt, *.csv)'; ...
-                            '*.mat', 'MAT-files (*.mat)'; ...
-                            '*.txt', 'Text Files (*.txt)'; ...
-                            '*.csv', 'CSV Files (*.csv)'}, ...
-                            'Select the first file');
-if isequal(file1, 0)
-    disp('User canceled the first file selection.');
-else
-    fullFileName1 = fullfile(path1, file1);
-    files{1} = fullFileName1;
-end
-
-disp('選擇緩解後檔案(.mat)');
-[file2, path2] = uigetfile({'*.mat;*.txt;*.csv', 'Supported Files (*.mat, *.txt, *.csv)'; ...
-                            '*.mat', 'MAT-files (*.mat)'; ...
-                            '*.txt', 'Text Files (*.txt)'; ...
-                            '*.csv', 'CSV Files (*.csv)'}, ...
-                            'Select the second file');
-if isequal(file2, 0)
-    disp('User canceled the second file selection.');
-else
-    fullFileName2 = fullfile(path2, file2);
-    files{2} = fullFileName2;
-end
-
-%選擇器
-pause(0.3);
-options = {'2channel','4channel'};
-choice = menu('請選擇一個選項：', options);
-switch choice
-    case 1
-        ch = 1;
-    case 2
-        ch = 2;
-end
-
-signal = {'Cz' , 'Fz'};
-
-% for  turns = 1: length(signal)
-for  turns = 1: 1
-%檔案讀取
-data_vars = {'x_test', 'x_recovered'};
-for i = 1:length(files)
-    load(files{i}, 'data');
-    assignin('base', data_vars{i}, data(ch+turns-1,:));
-end
-
-path = [path1 signal{turns} '_result'];
-mkdir(path);
-
-% 參數設置
-Fs = 250;
-
-% 計算並繪製 STFT
+x = data(2,:);
+fs = 250;
 win = hamming(250);
 noverlap = 125;
 nfft = 256;
-stft_data = {x_test, x_recovered};
-stft_results = cell(size(stft_data));
 
-for i = 1:length(stft_data)
-    [~, f, t_stft, ps] = spectrogram(stft_data{i}, win, noverlap, nfft, Fs, "ps");
-    stft_results{i} = {f, t_stft, abs(ps)};
+% 定義兩個時間範圍
+time_ranges = [
+    0 * 60, 3 * 60;  % 第一個時間範圍（秒）
+    25 * 60, 30 * 60   % 第二個時間範圍（秒）
+];
+
+% 初始化存儲結果的cell陣列
+results = cell(3, 1);
+
+for i = 1:size(time_ranges, 1)
+    % 設置要擷取的時間範圍
+    start_time = time_ranges(i, 1);
+    end_time = time_ranges(i, 2);
+
+    % 擷取指定時間段的數據
+    start_sample = round(start_time * fs) + 1;
+    end_sample = round(end_time * fs);
+    working_x = x(start_sample:end_sample);
+
+    [~, f, t_stft, ps] = spectrogram(working_x, win, noverlap, nfft, fs, "ps");
+
+    % 定義和提取各波段的功率譜
+    alpha_range = [8 12];
+    beta_range = [12, 35];
+    theta_range = [4, 7];
+
+    alpha_indices = find(f >= alpha_range(1) & f <= alpha_range(2));
+    beta_indices = find(f >= beta_range(1) & f <= beta_range(2));
+    theta_indices = find(f >= theta_range(1) & f <= theta_range(2));
+
+    alpha_ps = ps(alpha_indices, :);
+    beta_ps = ps(beta_indices, :);
+    theta_ps = ps(theta_indices, :);
+
+    A = sum(alpha_ps, 1);
+    B = sum(beta_ps, 1);
+    T = sum(theta_ps, 1);
+
+    X = [A; B; T]';
+
+    % 離群值刪除
+    Q1 = quantile(X, 0.25);
+    Q3 = quantile(X, 0.75);
+    IQR = Q3 - Q1;
+    lower_bound = Q1 - 1.5 * IQR;
+    upper_bound = Q3 + 1.5 * IQR;
+    valid_rows = all(X >= lower_bound & X <= upper_bound, 2);
+    X_cleaned = X(valid_rows, :);
+
+    % 存儲結果
+    results{i} = X_cleaned;
+
+    % 顯示處理進度
+    fprintf('已處理時間段 %d: %.1f 分鐘 到 %.1f 分鐘\n', i, start_time/60, end_time/60);
 end
 
+% 讀取和處理新檔案的數據
+new_file = 'recovered.mat';  % 替換為新檔案的實際名稱
+new_data = load(new_file);  % 載入新檔案
+new_x = new_data.data(2,:);  % 假設新數據結構與原始數據相同
 
-% 分布圖
-base_samples = 3 * 60; %共180秒
-fatigue_samples = 5 * 60;
-t_index_base = stft_results{1}{2} <= base_samples; %對應到第360個點，形成一個mask
-t_index_fatigue = stft_results{1}{2} >= (max(stft_results{1}{2}) - fatigue_samples);
+% 設置新檔案的時間範圍（例如：10-15分鐘）
+new_start_time = 0 * 60;  % 開始時間（秒）
+new_end_time = 5 * 60;    % 結束時間（秒）
 
-ps_base = stft_results{1}{3}(:, t_index_base);
-ps_fatigue = stft_results{1}{3}(:, t_index_fatigue);
-ps_recovered = stft_results{2}{3};
+% 擷取新檔案指定時間段的數據
+new_start_sample = round(new_start_time * fs) + 1;
+new_end_sample = round(new_end_time * fs);
+new_working_x = new_x(new_start_sample:new_end_sample);
 
-freq_bands = {[8 12], [12 35], [4 7]};
-band_names = {'Alpha (8-12 Hz)', 'Beta (12-35 Hz)', 'Theta (4-7 Hz)'};
+% 處理新檔案的數據
+[~, f, ~, new_ps] = spectrogram(new_working_x, win, noverlap, nfft, fs, "ps");
 
-total_energy = cell(3,1);
+% 定義和提取各波段的功率譜
+alpha_range = [8 12];
+beta_range = [12, 35];
+theta_range = [4, 7];
 
-%stft_results{1}是頻率的list
-for i = 1:length(freq_bands)
-    max = 0;
-    % 计算每个频段的能量数据
-    freq_index = (stft_results{1}{1} >= freq_bands{i}(1)) & (stft_results{1}{1} <= freq_bands{i}(2));
-    
-    % 第一阶段：前三分钟
-    ps_band_base = ps_base(freq_index, :);
-    energy_base = sum(ps_band_base, 1);
-    %ex(第一輪): 將base的alpha放進total_energy{1}的第一列
-    total_energy{1}{1,i} = energy_base';
-    
-    % 第二阶段：最后五分钟
-    ps_band_fatigue = ps_fatigue(freq_index, :);
-    energy_fatigue = sum(ps_band_fatigue, 1);
-    total_energy{i}{2,i} = energy_fatigue';
+alpha_indices = find(f >= alpha_range(1) & f <= alpha_range(2));
+beta_indices = find(f >= beta_range(1) & f <= beta_range(2));
+theta_indices = find(f >= theta_range(1) & f <= theta_range(2));
 
-    % 第三阶段：recovered整段
-    ps_band_recovered = ps_recovered(freq_index, :);
-    energy_recovered = sum(ps_band_recovered, 1);
-    total_energy{i}{3,i} = energy_recovered';
-end
+new_alpha_ps = new_ps(alpha_indices, :);
+new_beta_ps = new_ps(beta_indices, :);
+new_theta_ps = new_ps(theta_indices, :);
 
-% 假設您的數據存儲在名為 test 的變量中
-% test 是一個 1000 x 3 的矩陣 [alpha_ps beta_ps theta_ps]
+new_A = sum(new_alpha_ps, 1);
+new_B = sum(new_beta_ps, 1);
+new_T = sum(new_theta_ps, 1);
 
-% 步驟 1: 計算每列的四分位數
-test = [total_energy{1}{1} total_energy{1}{2} total_energy{1}{3}];
-Q1 = quantile(test, 0.25);
-Q3 = quantile(test, 0.75);
+new_X = [new_A; new_B; new_T]';
+
+% 離群值刪除（對新數據）
+Q1 = quantile(new_X, 0.25);
+Q3 = quantile(new_X, 0.75);
 IQR = Q3 - Q1;
-
-% 步驟 2: 定義離群值的範圍
 lower_bound = Q1 - 1.5 * IQR;
 upper_bound = Q3 + 1.5 * IQR;
+valid_rows = all(new_X >= lower_bound & new_X <= upper_bound, 2);
+new_X_cleaned = new_X(valid_rows, :);
 
-% 步驟 3: 找出非離群值的行
-valid_rows = all(test >= lower_bound & test <= upper_bound, 2);
+% 存儲新檔案的結果
+results{3} = new_X_cleaned;
 
-% 步驟 4: 只保留非離群值的行
-test_cleaned = test(valid_rows, :);
+
+% 合併兩個時間段的結果
+X_combined = vertcat(results{:});
 
 % 顯示結果
-fprintf('原始數據行數: %d\n', size(test, 1));
-fprintf('清理後數據行數: %d\n', size(test_cleaned, 1));
-fprintf('移除的行數: %d\n', size(test, 1) - size(test_cleaned, 1));
+fprintf('合併後的數據大小: %d x %d\n', size(X_combined, 1), size(X_combined, 2));
+
+% 可視化兩個時間段的結果
+figure;
+
+% 繪製第一個時間段的數據（使用藍色）
+scatter3(results{1}(:,1), results{1}(:,2), results{1}(:,3), 20, 'b', 'filled');
+hold on;
+
+% 繪製第二個時間段的數據（使用紅色）
+scatter3(results{2}(:,1), results{2}(:,2), results{2}(:,3), 20, 'r', 'filled');
+scatter3(results{3}(:,1), results{3}(:,2), results{3}(:,3), 20, 'y', 'filled');
+xlabel('Alpha Power');
+ylabel('Beta Power');
+zlabel('Theta Power');
+title('狀態分布圖');
+
+% 添加圖例
+legend('base', 'fatigue','recovered' , 'Location', 'bestoutside');
+
+% 調整視角和其他設置
+view(45, 30);
+grid on;
+rotate3d on;
 
 
 
-
-% clearvars -except data_vars files signal turns ch path1;
-
-close all;
+% 進行 K-means 分群
+k = 3;  % 設置群集數量，您可以根據需要調整
+[idx, centroids] = kmeans(X_combined, k);
+% 創建一個新的圖形窗口
+figure;
+% 使用不同顏色繪製每個群集
+colors = ['r','b','y','g', 'c', 'm'];  % 定義顏色，以防 k > 3
+for i = 1:k
+    cluster_points = X_combined(idx == i, :);
+    scatter3(cluster_points(:,1), cluster_points(:,2), cluster_points(:,3), 30, colors(i), 'filled');
+    hold on;
 end
-disp('已將各圖檔儲存至資料夾內');
-
-
+% 繪製群集中心
+scatter3(centroids(:,1), centroids(:,2), centroids(:,3), 50, 'k', 'x', 'LineWidth', 2);
+xlabel('Alpha Power');
+ylabel('Beta Power');
+zlabel('Theta Power');
+title('K-means 分群');
+% 創建圖例
+legend_entries = cell(k + 1, 1);
+for i = 1:k
+    legend_entries{i} = sprintf('Cluster %d', i);
+end
+legend_entries{k + 1} = 'Centroids';
+legend(legend_entries, 'Location', 'bestoutside');
+view(45, 30);
+grid on;
+rotate3d on;
