@@ -121,10 +121,12 @@ figure;
 % 繪製第一個時間段的數據（使用藍色）
 scatter3(results{1}(:,1), results{1}(:,2), results{1}(:,3), 20, 'b', 'filled');
 hold on;
-
 % 繪製第二個時間段的數據（使用紅色）
 scatter3(results{2}(:,1), results{2}(:,2), results{2}(:,3), 20, 'r', 'filled');
+hold on;
+% 繪製第三個時間段的數據（使用黃色）
 scatter3(results{3}(:,1), results{3}(:,2), results{3}(:,3), 20, 'y', 'filled');
+hold on;
 xlabel('Alpha Power');
 ylabel('Beta Power');
 zlabel('Theta Power');

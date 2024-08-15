@@ -33,7 +33,7 @@ alpha_range = [8 12];
 alpha_indices = find(f >= alpha_range(1) & f <= alpha_range(2));
 
 % 提取alpha波的功率譜
-alpha_ps = ps(alpha_indices, :);
+alpha_ps = abs(ps(alpha_indices, :));
 
 % 繪製alpha波的摺線圖
 figure;
@@ -49,7 +49,7 @@ beta_range = [12, 35];
 beta_indices = find(f >= beta_range(1) & f <= beta_range(2));
 
 % 提取Beta波的功率譜
-beta_ps = ps(beta_indices, :);
+beta_ps = abs(ps(beta_indices, :));
 
 % 繪製Beta波的摺線圖
 figure;
@@ -66,7 +66,7 @@ theta_range = [4, 7];
 theta_indices = find(f >= theta_range(1) & f <= theta_range(2));
 
 % 提取Theta波的功率譜
-theta_ps = ps(theta_indices, :);
+theta_ps = abs(ps(theta_indices, :));
 
 % 繪製Theta波的摺線圖
 figure;
@@ -76,7 +76,7 @@ ylabel('Theta Power');
 title('Theta Wave Power Over Time');
 set(gcf, 'Units', 'Inches', 'Position', [0, 0, 16, 9]);
 saveas(gcf, [ path1 '\working_theta.png']);
-close all;
+% close all;
 
 A = sum(alpha_ps,1);
 B = sum(beta_ps,1);
