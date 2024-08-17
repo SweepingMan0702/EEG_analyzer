@@ -24,7 +24,7 @@ for i = 1:size(time_ranges, 1)
     working_x = x(start_sample:end_sample);
 
     [~, f, t_stft, ps] = spectrogram(working_x, win, noverlap, nfft, fs, "ps");
-
+    ps = abs(ps);
     % 定義和提取各波段的功率譜
     alpha_range = [8 12];
     beta_range = [12, 35];
