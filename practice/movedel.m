@@ -10,7 +10,7 @@ ps = process_array(ps);
 
 
 figure;
-surf(t_stft/60,f, ps, 'EdgeColor', 'none');
+surf(t_stft,f, ps, 'EdgeColor', 'none');
 axis xy; axis tight; view(0, 90);
 title(['短時傅里葉變換 (STFT) - ']);
 xlabel('時間 (分)');
@@ -30,7 +30,7 @@ function result = process_array(input_array)
     
     % 創建一個邏輯數組，標記哪些列需要處理
     % 值超過1 佔該時間的25%
-    cols_to_process = sum(input_array > 1) > 0.25 * rows;
+    cols_to_process = sum(input_array > 1) > 1* rows;
     
     % 創建結果數組，初始為輸入數組的副本
     result = input_array;

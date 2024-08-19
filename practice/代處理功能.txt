@@ -16,3 +16,10 @@ modle : 如何偵測工作中的疲勞 、 緩解有效 (Kmeans、tree、DBSCAN)
 擷取typing test的分數
 
 1.除上base line是怎麼樣的base (開眼/閉眼)
+2.體動去除
+3.離群值視幹嘛的
+
+先把 濾波器改到想要的數值
+先考慮三狀態 有時間再處理working
+移除體動 方法二(若30~50Hz有10個能量超過4的頻帶 就移除整秒資料)
+除上baseline
