@@ -1,0 +1,15 @@
+先輸入clear all; (清空資料)
+抓資料進去 (load)
+然後下面這串貼上去就好 (改參數跟顏色)
+如果是4ch Cz改2 Fz改3就好
+
+
+cz = data(1,:);
+fz = data(2,:);
+figure;
+subplot(2,1,1);
+spectrogram(cz, 1250, 1125, 1024, 250, 'yaxis');
+title('CZ Spectrogram');
+subplot(2,1,2);
+spectrogram(fz, 1250, 1125, 1024, 250, 'yaxis');
+title('FZ Spectrogram');

@@ -1,0 +1,3 @@
+base 0~3
+working 3~23
+fatigue 27~30
