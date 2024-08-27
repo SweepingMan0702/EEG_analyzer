@@ -30,8 +30,7 @@ function result = process_array(input_array)
     
     % 創建一個邏輯數組，標記哪些列需要處理
     % 值超過1 佔該時間的25%
-    cols_to_process = sum(input_array > 1) > 1* rows;
-    
+    cols_to_process = sum(input_array > 1) > 0.25* rows;
     % 創建結果數組，初始為輸入數組的副本
     result = input_array;
     

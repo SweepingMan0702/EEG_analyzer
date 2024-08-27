@@ -1,91 +1,156 @@
-x = data(2,:);
-fs = 250;
-win = hamming(250);
-noverlap = 125;
-nfft = 256;
+我想要繪製分布圖以及直方圖(刪除離群值)
+以第一份程式碼為主體(遍地所有資料並統計) 並且不用擷取時間段(使用整筆資料) 參考第二份程式碼完成
+以下為第一份程式碼
+fpath = uigetdir(pwd, 'Select a folder');
+data_list = {'base_Cz','base_Fz','fatigue_Cz','fatigue_Cz','recovered_Cz','recovered_Cz'};
 
-% 設置要擷取的時間範圍
-start_time = 23 * 60;  % 開始時間（秒）
-end_time = 29 * 60;    % 結束時間（秒）
+for data_files = 1:length(data_list)
+    list = dir(fullfile(fpath, '**', '體動移除', [data_list{data_files} '.mat'])); % 查找所有符合条件的文件
+    
+    for j = 1:length(list)
+        fileName = fullfile(list(j).folder, list(j).name); % 构建完整路径
+        loaded_data = load(fileName);
+        if j == 1
+            total_ps = loaded_data.ps;
+            t_stft = loaded_data.t_stft;
+            f = loaded_data.f;
+        else
+            total_ps = total_ps + loaded_data.ps;
+        end
+    end
+    total_ps = total_ps / length(list);
+ end
 
-% 擷取指定時間段的數據
-start_sample = round(start_time * fs) + 1;
-end_sample = round(end_time * fs);
-working_x = x(start_sample:end_sample);
+以下為第二份程式碼
+% 分布圖
+base_samples = 3 * 60; %前三分鐘
+fatigue_samples = 5 * 60; %最後五分鐘
+t_index_base = stft_results{1}{2} <= base_samples; %對應到第360個點，形成一個mask
+t_index_fatigue = stft_results{1}{2} >= (max(stft_results{1}{2}) - fatigue_samples);
+ps_base = stft_results{1}{3}(:, t_index_base);
+ps_fatigue = stft_results{1}{3}(:, t_index_fatigue);
+ps_recovered = stft_results{2}{3};
+
+freq_bands = {[8 12], [12 35], [4 7]};
+band_names = {'Alpha (8-12 Hz)', 'Beta (12-35 Hz)', 'Theta (4-7 Hz)'};
+
+%stft_results{1}是頻率的list
+for i = 1:length(freq_bands)
+    max = 0;
+    % 计算每个频段的能量数据
+    freq_index = (stft_results{1}{1} >= freq_bands{i}(1)) & (stft_results{1}{1} <= freq_bands{i}(2));
+    
+    % 第一階段：前三分鐘
+    ps_band_base = ps_base(freq_index, :);
+    energy_base = sum(ps_band_base, 1);
+    
+    % 第二階段：最後五分鐘
+    ps_band_fatigue = ps_fatigue(freq_index, :);
+    energy_fatigue = sum(ps_band_fatigue, 1);
+
+    % 第三階段：recovered
+    ps_band_recovered = ps_recovered(freq_index, :);
+    energy_recovered = sum(ps_band_recovered, 1);
+
+    [minNonOutlier, maxNonOutlier,nonOutlierData_first3] = calculateNonOutlierRange(energy_base);
+    if max < maxNonOutlier
+        max = maxNonOutlier;
+    end
+
+    [minNonOutlier, maxNonOutlier ,nonOutlierData_last7] = calculateNonOutlierRange(energy_fatigue);
+    if max < maxNonOutlier
+        max = maxNonOutlier;
+    end
+
+    [minNonOutlier, maxNonOutlier , nonOutlierData_recovered] = calculateNonOutlierRange(energy_recovered);
+    if max < maxNonOutlier
+        max = maxNonOutlier;
+    end
+
+    % 繪製直方圖 已刪除離群值
+    figure;
+    subplot(1, 3, 1);
+    histogram(nonOutlierData_first3);
+    xlabel('能量大小'); ylabel('分布');
+    title([band_names{i}, ' - 初始狀態']);
+    xlim([0 max]);
+    grid on;
+
+    subplot(1, 3, 2);
+    histogram(nonOutlierData_last7);
+    xlabel('能量大小'); ylabel('分布');
+    title([band_names{i}, ' - 疲勞狀態']);
+    xlim([0 max]);
+    grid on;
+
+    subplot(1, 3, 3);
+    histogram(nonOutlierData_recovered);
+    xlabel('能量大小'); ylabel('分布');
+    title([band_names{i}, ' - 緩解恢復']);
+    xlim([0 max]);
+    grid on;
+    set(gcf, 'Units', 'Inches', 'Position', [0, 0, 16, 9]);
+    saveas(gcf, [path '\histogram_' band_names{i} '.png']);
 
 
-[~, f, t_stft, ps] = spectrogram(working_x, win, noverlap, nfft, fs, "ps");
-% 定義alpha波範圍
-alpha_range = [8 12];
-alpha_indices = find(f >= alpha_range(1) & f <= alpha_range(2));
-
-% 提取alpha波的功率譜
-alpha_ps = ps(alpha_indices, :);
-
-% 定義Beta波範圍
-beta_range = [12, 35];
-beta_indices = find(f >= beta_range(1) & f <= beta_range(2));
-
-% 提取Beta波的功率譜
-beta_ps = ps(beta_indices, :);
-
-% 定義Theta波範圍
-theta_range = [4, 7];
-theta_indices = find(f >= theta_range(1) & f <= theta_range(2));
-
-% 提取Theta波的功率譜
-theta_ps = ps(theta_indices, :);
-
-A = sum(alpha_ps,1);
-B = sum(beta_ps,1);
-T = sum(theta_ps,1);
-X = [A ;B ;T]';
-
-%離群值刪除
-% 步驟 1: 計算每列的四分位數
-Q1 = quantile(X, 0.25);
-Q3 = quantile(X, 0.75);
-IQR = Q3 - Q1;
-% 步驟 2: 定義離群值的範圍
-lower_bound = Q1 - 1.5 * IQR;
-upper_bound = Q3 + 1.5 * IQR;
-% 步驟 3: 找出非離群值的行
-valid_rows = all(X >= lower_bound & X <= upper_bound, 2);
-% 步驟 4: 只保留非離群值的行
-X_cleaned = X(valid_rows, :);
-% 顯示結果
-% fprintf('原始數據行數: %d\n', size(X, 1));
-% fprintf('清理後數據行數: %d\n', size(X_cleaned, 1));
-% fprintf('移除的行數: %d\n', size(X, 1) - size(X_cleaned, 1));
 
 
-% 假設您的數據存儲在名為 data 的變量中
-% data 是一個 1000 x 3 的矩陣 [alpha_ps beta_ps theta_ps]
+    % 创建新的图形窗口
+    figure;
+    
+    % 绘制前三分钟能量分布的箱形图
+    subplot(1, 3, 1);
+    boxchart(energy_base);
+    % [minNonOutlier, maxNonOutlier] = calculateNonOutlierRange(energy_base);
+    % ylim([minNonOutlier-5 maxNonOutlier+5]);
+    ylim([0 max]);
+    xlabel('能量大小'); ylabel('分布');
+    title([band_names{i}, ' - 初始狀態']);
+    grid on;
+    
+    % 绘制最后七分钟能量分布的箱形图
+    subplot(1, 3, 2);
+    boxchart(energy_fatigue);
+    % [minNonOutlier, maxNonOutlier] = calculateNonOutlierRange(energy_fatigue);
+    % ylim([minNonOutlier-5 maxNonOutlier+5]);
+    ylim([0 max]);
+    xlabel('能量大小'); ylabel('分布');
+    title([band_names{i}, ' - 疲勞狀態']);
+    grid on;
+    
+    % 绘制recovered整段能量分布的箱形图
+    subplot(1, 3, 3);
+    boxchart(energy_recovered);
+    % [minNonOutlier, maxNonOutlier] = calculateNonOutlierRange(energy_recovered);
+    % ylim([minNonOutlier-5 maxNonOutlier+5]);
+    ylim([0 max]);
+    xlabel('能量大小'); ylabel('分布');
+    title([band_names{i}, ' - 緩解恢復']);
+    grid on;
 
-% 創建圖形
-figure;
+    set(gcf, 'Units', 'Inches', 'Position', [0, 0, 16, 9]);
+    saveas(gcf, [path '\boxchart_' band_names{i} '.png']);
+end
+clearvars -except data_vars files signal turns ch path1;
 
-% 使用 scatter3 函數繪製三維散點圖
-scatter3(X_cleaned(:,1), X_cleaned(:,2), X_cleaned(:,3), 20, 'filled');
+close all;
+end
+disp('已將各圖檔儲存至資料夾內');
 
-% 添加標籤和標題
-xlabel('Alpha Power');
-ylabel('Beta Power');
-zlabel('Theta Power');
-title('EEG Power Spectrum Distribution');
+%箱型圖範圍函式
 
-% 添加顏色條以表示點的密度
-colorbar;
-colormap(jet); % 使用 jet 顏色圖以更好地區分點的密度
 
-% 調整視角以獲得更好的視圖
-view(45, 30);
-
-% 添加網格線以增強 3D 效果
-grid on;
-
-% 調整軸的範圍使圖形更加緊湊（可選）
-axis tight;
-
-% 添加旋轉控制（可選，使用者可以在圖形窗口中旋轉視圖）
-rotate3d on;
+function [minNonOutlier, maxNonOutlier , nonOutlierData] = calculateNonOutlierRange(data)
+    % 计算箱线图统计数据
+    Q1 = quantile(data, 0.25); % 第 25 百分位数 (Q1)
+    Q3 = quantile(data, 0.75); % 第 75 百分位数 (Q3)
+    IQR = Q3 - Q1; % 四分位距
+    % 计算非离群值的范围
+    lowerWhisker = Q1 - 1.5 * IQR; % 下胡须的最小值
+    upperWhisker = Q3 + 1.5 * IQR; % 上胡须的最大值
+    % 获取非离群值
+    nonOutlierData = data(data >= lowerWhisker & data <= upperWhisker);
+    % 计算非离群值的最小值和最大值
+    minNonOutlier = min(nonOutlierData);
+    maxNonOutlier = max(nonOutlierData);
+end
