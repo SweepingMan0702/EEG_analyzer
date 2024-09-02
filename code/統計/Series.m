@@ -1,3 +1,6 @@
+%資料彙總 讀取資料夾內{'base_Fz','fatigue_Fz','recovered_Fz'}同檔名資料PS"相加"並儲存
+%建置_combined.mat並儲存
+
 fpath = uigetdir(pwd, 'Select a folder');
 data_list = {'base_Fz','fatigue_Fz','recovered_Fz'};
 for data_files = 1:length(data_list)

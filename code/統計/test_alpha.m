@@ -1,3 +1,7 @@
+%將子資料夾內{'base_Fz','fatigue_Fz','recovered_Fz'}檔案合併及統計
+%Fz、Cz要手動更改
+%alpha
+
 fpath = uigetdir(pwd, 'Select a folder');
 data_list = {'base_Fz','fatigue_Fz','recovered_Fz'};
 

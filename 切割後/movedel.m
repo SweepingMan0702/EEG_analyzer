@@ -1,7 +1,13 @@
+%使用說明 *移除體動 (前後名平均取代標記點)
+%資料需求: 選擇一資料夾內包含{base,fatigue,recovered}資料夾且內部需有.mat檔
+%將10、85取消註解
+%執行後原路徑生成"體動移除"資料夾，包含Cz、Fz等的ps資料(.mat共六個檔案)
+%
+
 fpath = uigetdir(pwd, 'Select a folder');
 list = {'base','fatigue','recovered'};
 channel = {'Cz','Fz'};
-mkdir([fpath '\體動移除']);
+% mkdir([fpath '\體動移除']);
 over_value = 0.4;
 over_counts = 3;
 for k = 1:length(list)
@@ -74,10 +80,9 @@ for k = 1:length(list)
 
     
             result_file_name = sprintf([list{k} '_' channel{ch} '.mat']);
-            % result_file_name = sprintf(['f' '.mat']);
             full_path = fullfile([fpath '\體動移除'] , result_file_name);
             % 保存這個時間段的數據
-            save(full_path, 'ps','t_stft','f');
+            % save(full_path, 'ps','t_stft','f');
         end
         clearvars -except fpath list channel temp_path matFiles over_value over_counts;
     end

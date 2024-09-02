@@ -1,3 +1,5 @@
+%繪製折線圖並平滑化處理
+
 fpath = uigetdir(pwd, 'Select a folder');
 data_list = {'base_Cz','fatigue_Cz','recovered_Cz','base_Fz','fatigue_Fz','recovered_Fz'};
 for data_files = 1:length(data_list)

@@ -1,3 +1,5 @@
+%beta
+
 fpath = uigetdir(pwd, 'Select a folder');
 data_list = {'base_Fz','fatigue_Fz','recovered_Fz'};
 

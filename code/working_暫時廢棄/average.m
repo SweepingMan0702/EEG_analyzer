@@ -1,15 +1,4 @@
-[file1, path1] = uigetfile({'*.mat;*.txt;*.csv', 'Supported Files (*.mat, *.txt, *.csv)'; ...
-                            '*.mat', 'MAT-files (*.mat)'; ...
-                            '*.txt', 'Text Files (*.txt)'; ...
-                            '*.csv', 'CSV Files (*.csv)'}, ...
-                            'Select the first file');
-if isequal(file1, 0)
-    disp('User canceled the first file selection.');
-else
-    fullFileName1 = fullfile(path1, file1);
-    file = fullFileName1;
-end
-load(file, 'data');
+%working用 暫時廢棄
 
 x = data(2,:);
 fs = 250;
@@ -33,7 +22,7 @@ alpha_range = [8 12];
 alpha_indices = find(f >= alpha_range(1) & f <= alpha_range(2));
 
 % 提取alpha波的功率譜
-alpha_ps = abs(ps(alpha_indices, :));
+alpha_ps = ps(alpha_indices, :);
 
 % 繪製alpha波的摺線圖
 figure;
@@ -42,14 +31,14 @@ xlabel('Time (min)');
 ylabel('Alpha Power');
 title('Alpha Wave Power Over Time');
 set(gcf, 'Units', 'Inches', 'Position', [0, 0, 16, 9]);
-saveas(gcf, [ path1 '\working_alpha.png']);
+saveas(gcf, [ 'D:\桌面\EEG\EEG_analyzer\practice' '\working_alpha.png']);
 
 % 定義Beta波範圍
 beta_range = [12, 35];
 beta_indices = find(f >= beta_range(1) & f <= beta_range(2));
 
 % 提取Beta波的功率譜
-beta_ps = abs(ps(beta_indices, :));
+beta_ps = ps(beta_indices, :);
 
 % 繪製Beta波的摺線圖
 figure;
@@ -58,7 +47,7 @@ xlabel('Time (min)');
 ylabel('beta Power');
 title('Beta Wave Power Over Time');
 set(gcf, 'Units', 'Inches', 'Position', [0, 0, 16, 9]);
-saveas(gcf, [ path1 '\working_beta.png']);
+saveas(gcf, [ 'D:\桌面\EEG\EEG_analyzer\practice' '\working_beta.png']);
 
 
 % 定義Theta波範圍
@@ -66,7 +55,7 @@ theta_range = [4, 7];
 theta_indices = find(f >= theta_range(1) & f <= theta_range(2));
 
 % 提取Theta波的功率譜
-theta_ps = abs(ps(theta_indices, :));
+theta_ps = ps(theta_indices, :);
 
 % 繪製Theta波的摺線圖
 figure;
@@ -75,7 +64,7 @@ xlabel('Time (min)');
 ylabel('Theta Power');
 title('Theta Wave Power Over Time');
 set(gcf, 'Units', 'Inches', 'Position', [0, 0, 16, 9]);
-saveas(gcf, [ path1 '\working_theta.png']);
+saveas(gcf, [ 'D:\桌面\EEG\EEG_analyzer\practice' '\working_theta.png']);
 % close all;
 
 A = sum(alpha_ps,1);
@@ -87,7 +76,7 @@ X = [A ;B ;T]';
 waves = {A, B, T};
 wave_names = {'Alpha', 'Beta', 'Theta'};
 
-for i = 1:length(wave_names)
+for i = 1:1
     wave = waves{i};
     
     % 只保留 t_stft 小於 60 秒的數據

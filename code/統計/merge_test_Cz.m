@@ -1,3 +1,5 @@
+%Cz的統計盒方圖、長條圖
+
 fpath = uigetdir(pwd, 'Select a folder');
 data_list = {'base_Cz','fatigue_Cz','recovered_Cz'};
 band_names = {'Alpha (8-12 Hz)', 'Beta (12-35 Hz)', 'Theta (4-7 Hz)'};
