@@ -67,7 +67,7 @@ for k = 1:length(list)
             %         ps = process_array(ps, over_value, over_counts);
             %     end
             % end
-            ps = process_array(ps, over_value, over_counts,remove_counts);
+            ps = process_array(ps, over_value, over_counts);
             
             subplot(2,1,2);
             surf(t_stft/60,f, ps, 'EdgeColor', 'none');
@@ -96,8 +96,13 @@ for k = 1:length(list)
 end
 
 
-function result = process_array(input_array, over_value, over_counts,remove_col)
-    remove_col  = 0;
+
+% A = [1 0 3; 4 0 6; 7 0 9];  % 示例矩阵
+% A(:, all(A == 0)) = [];  % 移除全为 0 的列
+
+
+
+function result = process_array(input_array, over_value, over_counts)
     % 獲取數組的大小
     [rows, cols] = size(input_array);
 
@@ -119,9 +124,12 @@ function result = process_array(input_array, over_value, over_counts,remove_col)
                 %     avg = (input_array(row, col-1) + input_array(row, col+1)) / 2;
                 % end
                 % 替換值
-                remove_col = remove_col + 1;
                 result(row, col) = 0;
             end
         end
     end
 end
+
+
+
+
