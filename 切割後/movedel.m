@@ -3,18 +3,25 @@
 %執行後原路徑生成"體動移除"資料夾，包含Cz、Fz等的ps資料(.mat共六個檔案)
 %
 save_switch = 0;
-fpath = uigetdir(pwd, 'Select a folder');
-list = {'base','fatigue','recovered'};
-channel = {'Cz','Fz'};
-% mkdir([fpath '\體動移除']);
-
-if save_switch == 1
-    mkdir([fpath '\體動移除']);
-end
 
 % 超過點能量大小 、 超過點個數
 over_value = 0.2;
-over_counts = 3;
+over_counts = 2;
+
+
+
+
+fpath = uigetdir(pwd, 'Select a folder');
+list = {'base','fatigue','recovered'};
+channel = {'Cz','Fz'};
+
+
+if save_switch == 1
+    mkdir([fpath '\體動移除']);
+    mkdir([fpath '\體動移除\圖片']);
+end
+
+
 for k = 1:length(list)
     temp_path = [fpath '\' list{k}];
     matFiles = dir(fullfile(temp_path, '*.mat'));
@@ -22,7 +29,7 @@ for k = 1:length(list)
     for j = 1:length(matFiles)
         fileName = fullfile(temp_path, matFiles(j).name);
         loaded_data = load(fileName);
-        disp(fileName);
+        disp(['load : ' fileName]);
         % 查看加载的数据结构
         vars = fieldnames(loaded_data);
         % 假设只加载了一个变量，可以这样访问
@@ -41,6 +48,7 @@ for k = 1:length(list)
             finish = 0;
             count = 0;
             subplot(2,1,1);
+            t_stft = t_stft(1,1:length(ps));
             surf(t_stft/60,f, ps, 'EdgeColor', 'none');
             axis xy; axis tight; view(0, 90);
             title(['短時傅里葉變換 (STFT) - ' list{k} '-' channel{ch} ]);
@@ -70,6 +78,7 @@ for k = 1:length(list)
             ps = process_array(ps, over_value, over_counts);
             
             subplot(2,1,2);
+            t_stft = t_stft(1,1:length(ps));
             surf(t_stft/60,f, ps, 'EdgeColor', 'none');
             axis xy; axis tight; view(0, 90);
             title(['短時傅里葉變換 (STFT) - ' list{k} '-' channel{ch} ]);
@@ -83,11 +92,17 @@ for k = 1:length(list)
             set(gcf, 'Units', 'Inches', 'Position', [0, 0, 16, 9]);
 
     
-            result_file_name = sprintf([list{k} '_' channel{ch} '.mat']);
-            full_path = fullfile([fpath '\體動移除'] , result_file_name);
+            result_file_name = sprintf([list{k} '_' channel{ch}]);
+            full_path = fullfile([fpath '\體動移除'] , [result_file_name '.mat']);
+            pic_path = fullfile([fpath '\體動移除\圖片'] , [result_file_name '.png']);
+            
             % 保存這個時間段的數據
             if save_switch == 1
-                save(full_path, 'ps','t_stft','f');
+                save([full_path '.mat'], 'ps','t_stft','f');
+                
+                saveas(gcf, pic_path);
+                echo('running');
+                close all;
             end
 
         end
@@ -97,8 +112,8 @@ end
 
 
 
-% A = [1 0 3; 4 0 6; 7 0 9];  % 示例矩阵
-% A(:, all(A == 0)) = [];  % 移除全为 0 的列
+
+
 
 
 
@@ -128,6 +143,7 @@ function result = process_array(input_array, over_value, over_counts)
             end
         end
     end
+    result(:, all(result == 0)) = [];  % 移除全为 0 的列
 end
 
 
