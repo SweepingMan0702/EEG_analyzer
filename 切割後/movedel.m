@@ -2,19 +2,15 @@
 %資料需求: 選擇一資料夾內包含{base,fatigue,recovered}資料夾且內部需有.mat檔
 %執行後原路徑生成"體動移除"資料夾，包含Cz、Fz等的ps資料(.mat共六個檔案)
 %
-save_switch = 0;
+save_switch = 1;
 
 % 超過點能量大小 、 超過點個數
 over_value = 0.2;
-over_counts = 2;
-
-
-
+over_counts = 3;
 
 fpath = uigetdir(pwd, 'Select a folder');
 list = {'base','fatigue','recovered'};
 channel = {'Cz','Fz'};
-
 
 if save_switch == 1
     mkdir([fpath '\體動移除']);
@@ -48,6 +44,7 @@ for k = 1:length(list)
             finish = 0;
             count = 0;
             subplot(2,1,1);
+            init_ps_len = length(ps);
             t_stft = t_stft(1,1:length(ps));
             surf(t_stft/60,f, ps, 'EdgeColor', 'none');
             axis xy; axis tight; view(0, 90);
@@ -77,11 +74,13 @@ for k = 1:length(list)
             % end
             ps = process_array(ps, over_value, over_counts);
             
+            del_ps_len = round((init_ps_len - length(ps)) / init_ps_len * 100 , 1);
             subplot(2,1,2);
             t_stft = t_stft(1,1:length(ps));
             surf(t_stft/60,f, ps, 'EdgeColor', 'none');
             axis xy; axis tight; view(0, 90);
             title(['短時傅里葉變換 (STFT) - ' list{k} '-' channel{ch} ]);
+            subtitle(['remove ' num2str(del_ps_len) '%'])
             xlabel('時間 (分)');
             ylabel('頻率 (Hz)');
             colorbar;
@@ -93,7 +92,7 @@ for k = 1:length(list)
 
     
             result_file_name = sprintf([list{k} '_' channel{ch}]);
-            full_path = fullfile([fpath '\體動移除'] , [result_file_name '.mat']);
+            full_path = fullfile([fpath '\體動移除'] , result_file_name);
             pic_path = fullfile([fpath '\體動移除\圖片'] , [result_file_name '.png']);
             
             % 保存這個時間段的數據
@@ -101,7 +100,6 @@ for k = 1:length(list)
                 save([full_path '.mat'], 'ps','t_stft','f');
                 
                 saveas(gcf, pic_path);
-                echo('running');
                 close all;
             end
 

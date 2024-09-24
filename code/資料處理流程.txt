@@ -1,0 +1,17 @@
+4Channel
+BCI(收訊號) > minipsg轉檔(有濾波 留5~100)
+
+資料切割 各state
+
+體動直接刪除
+(體動刪除前後對比)
+
+各數據各頻段可視化
+(單筆數據各state - α,β,γ對比) Cz Fz 都要做
+
+
+加總統計
+
+randomforest找特徵(每個Hz)
+
+kmeans分群
