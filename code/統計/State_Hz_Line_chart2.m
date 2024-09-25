@@ -17,13 +17,14 @@ end
 alpha_range = [8 12];
 beta_range = [12, 35];
 theta_range = [4, 7];
+freq_range = {alpha_range,beta_range,theta_range};
 color_list = {'r','g','b'};
 state_names = {'Base', 'Fatigue', 'Recovered'};
-bands = {'alpha','beta','theta'};
+bands = {'α','β','θ'};
 
 for band = 1:3  % 1: alpha, 2: beta, 3: theta
     figure;
-    hold on;
+    % hold on;
     switch band
         case 1
             freq_range = alpha_range;
@@ -43,22 +44,19 @@ for band = 1:3  % 1: alpha, 2: beta, 3: theta
         % 计算功率谱并平滑
         ps = smoothdata(mean(abs(Cz_info{1, state}(indices, :)), 1), 'gaussian', 5);
         
+        subplot(3,1,state);
         % 绘制
         plot(Cz_info{2, state}/60, ps, color_list{state}, 'LineWidth', 2);
+        title([state_names{state} ' - ' bands{band}] );
+        xlabel('Time (min)');
+        ylabel('Power');
+        % 调整图形
+        grid on;
+        axis tight;
     end
-    legend('Base', 'fatigue', 'recovered');
-    % 添加图形标签和标题
-    xlabel('Time (min)');
-    ylabel('Power');
-    title(bands{band});
-    
-    % 调整图形
-    grid on;
-    axis tight;
-    
     % 调整图形大小以适应图例
     set(gcf, 'Position', get(0, 'Screensize'));
-    pic_path = fullfile(fpath , [bands{band} '_compare.png']);
+    pic_path = fullfile(fpath , [band_name '_compare.png']);
 
     if save_switch == 1
         saveas(gcf,pic_path);
@@ -66,4 +64,4 @@ for band = 1:3  % 1: alpha, 2: beta, 3: theta
     end
     
 end
-
+clear all;
