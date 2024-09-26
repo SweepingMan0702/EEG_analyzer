@@ -1,8 +1,13 @@
-%資料彙總 讀取資料夾內{'base_Fz','fatigue_Fz','recovered_Fz'}同檔名資料PS"相加"並儲存
+%資料彙總 讀取資料夾內同檔名資料ps"連接"並儲存
 %建置_combined.mat並儲存
 
+
 fpath = uigetdir(pwd, 'Select a folder');
-data_list = {'base_Fz','fatigue_Fz','recovered_Fz'};
+channel = {'Cz','Fz'};
+
+for index = 1:length(channel)
+data_list = {['base_' channel{index}],['fatigue_' channel{index}],['recovered_' channel{index}]};
+
 for data_files = 1:length(data_list)
     list = dir(fullfile(fpath, '**', '體動移除', [data_list{data_files} '.mat'])); % 查找所有符合条件的文件
     total_ps = [];
@@ -14,12 +19,15 @@ for data_files = 1:length(data_list)
             t_stft = loaded_data.t_stft;
             f = loaded_data.f;
         else
-            total_ps = horzcat(total_ps, loaded_data.ps);
+            total_ps = [ total_ps loaded_data.ps ];
         end
-        
+        % length(total_ps)
+        clear loaded_data;
     end
     
+    % [data_list{data_files} '_combined.mat']
     % 在這裡保存或處理 total_ps
-    save(fullfile(fpath, [data_list{data_files} '_combined.mat']), 'total_ps', 't_stft', 'f');
+    save(fullfile(fpath, [data_list{data_files} '_combined.mat']), 'total_ps', 'f');
     clear total_ps;
+end
 end

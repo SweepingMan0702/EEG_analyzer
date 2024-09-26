@@ -9,6 +9,7 @@ BCI(收訊號) > minipsg轉檔(有濾波 留5~100)
 各數據各頻段可視化
 (單筆數據各state - α,β,γ對比) Cz Fz 都要做
 
+將各state 除以 base_line
 
 加總統計
 

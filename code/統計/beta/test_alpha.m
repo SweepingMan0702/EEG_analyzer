@@ -33,7 +33,7 @@ for data_files = 1:length(data_list)
     alpha_ps = smoothdata(sum(abs(total_ps(alpha_indices, :)), 1), 'gaussian', 5);
     
     % 儲存當前狀態的Alpha波數據
-    alpha_data = [alpha_data; alpha_ps];
+    alpha_data = [alpha_data alpha_ps];
 end
 
 % 創建一個圖形並使用subplot繪製由上而下排列的三個子圖
@@ -67,4 +67,4 @@ ylim([0, 150]);
 set(gcf, 'Units', 'Inches', 'Position', [0, 0, 16, 15]);
 
 % 保存圖形
-saveas(gcf, fullfile(fpath, 'images\Fz_Alpha_Comparison_Subplots.png'));
+% saveas(gcf, fullfile(fpath, 'images\Fz_Alpha_Comparison_Subplots.png'));
