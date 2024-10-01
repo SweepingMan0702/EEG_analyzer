@@ -21,10 +21,11 @@ end
 
 for k = 1:length(list)
     temp_path = [fpath '\' list{k}];
-    matFiles = dir(fullfile(temp_path, '*.mat'));
+%     matFiles = dir(fullfile(temp_path, '*.mat'));
 
-    for j = 1:length(matFiles)
-        fileName = fullfile(temp_path, matFiles(j).name);
+    % for j = 1:length(matFiles)
+    for j = 1:length(3)
+        fileName = [temp_path, '.mat'];
         loaded_data = load(fileName);
         disp(['load : ' fileName]);
         % 查看加载的数据结构
@@ -98,7 +99,7 @@ for k = 1:length(list)
             
             % 保存這個時間段的數據
             if save_switch == 1
-                save([full_path '.mat'], 'ps','t_stft','f');
+                save([full_path], 'ps','t_stft','f');
                 
                 saveas(gcf, pic_path);
                 close all;
@@ -108,6 +109,7 @@ for k = 1:length(list)
         clearvars -except fpath list channel temp_path matFiles over_value over_counts save_switch;
     end
 end
+
 
 
 

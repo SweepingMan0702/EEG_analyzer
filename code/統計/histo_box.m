@@ -55,8 +55,8 @@ for band = 1:3  % 1: alpha, 2: beta, 3: theta
 
     for state = 1:length(file_list)
         subplot(1, 3, state);
-        ylim([0 700]);
-        xlim([0 60]);
+        % ylim([0 150]);
+        % xlim([0 60]);
     end
 
     sgtitle([channel{index} '-' bands{band} '-histogram']);
