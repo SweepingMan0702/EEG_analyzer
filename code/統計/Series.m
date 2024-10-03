@@ -8,8 +8,8 @@ channel = {'Cz','Fz'};
 for index = 1:length(channel)
 data_list = {['base_' channel{index}],['fatigue_' channel{index}],['recovered_' channel{index}]};
 
-for data_files = 1:length(data_list)
-    list = dir(fullfile(fpath, '**', '體動移除', [data_list{data_files} '.mat'])); % 查找所有符合条件的文件
+for data_file = 1:length(data_list)
+    list = dir(fullfile(fpath, '**', '體動移除', [data_list{data_file} '.mat'])); % 查找所有符合条件的文件
     total_ps = [];
     for j = 1:length(list)
         fileName = fullfile(list(j).folder, list(j).name); % 構建完整路徑
@@ -27,7 +27,7 @@ for data_files = 1:length(data_list)
     
     % [data_list{data_files} '_combined.mat']
     % 在這裡保存或處理 total_ps
-    save(fullfile(fpath, [data_list{data_files} '_combined.mat']), 'total_ps', 'f');
+    save(fullfile(fpath, [data_list{data_file} '_combined.mat']), 'total_ps', 'f');
     clear total_ps;
 end
 end
