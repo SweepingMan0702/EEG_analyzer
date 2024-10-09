@@ -1,7 +1,0 @@
-base 0~3
-working 3~23
-fatigue 27~30
-
-% 超過點能量大小 、 超過點個數
-over_value = 0.2;
-over_counts = 2;

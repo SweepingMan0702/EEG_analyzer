@@ -1,3 +1,0 @@
-% 超過點能量大小 、 超過點個數
-over_value = 0.2;
-over_counts = 3;

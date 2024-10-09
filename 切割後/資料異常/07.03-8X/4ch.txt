@@ -1,5 +1,0 @@
-Cz : 2
-Fz : 3
-base : 0~3
-working : 4~23 
-fatigue : 27~30
